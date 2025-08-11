@@ -352,10 +352,28 @@
     // Initialize session token
     SECURITY_CONFIG.SESSION_TOKEN = generateSessionToken();
 
+    // Storage helper functions
+    function getStoredRequests() {
+        try {
+            return JSON.parse(localStorage.getItem('requests') || '[]');
+        } catch (error) {
+            console.error('Error reading stored requests:', error);
+            return [];
+        }
+    }
+
+    function setStoredRequests(requests) {
+        try {
+            localStorage.setItem('requests', JSON.stringify(requests));
+        } catch (error) {
+            console.error('Error storing requests:', error);
+        }
+    }
+
     // Rate limiting functionality
     function checkRateLimit() {
         const now = Date.now();
-        const requests = JSON.parse(sessionStorage.getItem('requests') || '[]');
+        const requests = getStoredRequests();
 
         // Remove requests older than 1 hour
         const recentRequests = requests.filter(time => now - time < 3600000);
@@ -374,7 +392,7 @@
 
         // Add current request
         recentRequests.push(now);
-        sessionStorage.setItem('requests', JSON.stringify(recentRequests));
+        setStoredRequests(recentRequests);
 
         // Update counter display
         updateRateLimitDisplay();
@@ -385,8 +403,13 @@
     // Update rate limit counter display
     function updateRateLimitDisplay() {
         const now = Date.now();
-        const requests = JSON.parse(sessionStorage.getItem('requests') || '[]');
+        const requests = getStoredRequests();
         const recentRequests = requests.filter(time => now - time < 3600000);
+
+        // Clean up old requests in storage
+        if (requests.length !== recentRequests.length) {
+            setStoredRequests(recentRequests);
+        }
 
         const remaining = SECURITY_CONFIG.MAX_REQUESTS_PER_HOUR - recentRequests.length;
         const counterElement = document.getElementById('rateLimitCounter');
