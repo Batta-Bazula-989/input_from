@@ -308,9 +308,9 @@
 <script>
     // Security configuration
     const SECURITY_CONFIG = {
-        MAX_REQUESTS_PER_HOUR: 10,
+        MAX_REQUESTS_PER_HOUR: 20,
         ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9\s\-\.\_]+$/,
-        MIN_REQUEST_INTERVAL: 5000, // 5 seconds between requests
+        MIN_REQUEST_INTERVAL: 6000, // 6 seconds between requests
         SESSION_TOKEN: null
     };
 
@@ -352,16 +352,19 @@
     function sanitizeInput(input) {
         if (typeof input !== 'string') return '';
 
+        // First trim whitespace
+        input = input.trim();
+
+        // If empty after trimming, return empty
+        if (input.length === 0) return '';
+
         // Remove any HTML/script tags
         input = input.replace(/<[^>]*>?/gm, '');
 
         // Remove potentially dangerous characters
         input = input.replace(/[<>\"'&]/g, '');
 
-        // Trim whitespace
-        input = input.trim();
-
-        // Check against allowed characters
+        // Check against allowed characters - if invalid, return empty string
         if (!SECURITY_CONFIG.ALLOWED_CHARS_REGEX.test(input)) {
             return '';
         }
@@ -386,31 +389,31 @@
         console.log('Run analysis clicked');
         hideMessages();
 
-        // Rate limiting check
-        if (!checkRateLimit()) {
-            showError('Rate limit exceeded. Please wait before making another request.', 'rate-limit-warning');
-            return;
-        }
-
-        // Get competitor values and sanitize
+        // Get competitor values and sanitize them
         let competitor1 = sanitizeInput(document.getElementById('competitor1').value);
         let competitor2 = sanitizeInput(document.getElementById('competitor2').value);
         let competitor3 = sanitizeInput(document.getElementById('competitor3').value);
 
         console.log('Sanitized values:', competitor1, competitor2, competitor3);
 
-        // Validation - at least one competitor required
+        // Validation - at least one competitor required (check AFTER sanitization)
         if (!competitor1 && !competitor2 && !competitor3) {
-            console.log('No competitors entered');
-            showError('Please enter at least one competitor');
+            console.log('No valid competitors entered after sanitization');
+            showError('Please enter at least one valid competitor (only letters, numbers, spaces, hyphens, dots and underscores allowed)');
             return;
         }
 
-        // Validate each competitor name
+        // Rate limiting check (moved after input validation)
+        if (!checkRateLimit()) {
+            showError('Rate limit exceeded. Please wait before making another request (max 20 requests per hour, 6 seconds between requests).', 'rate-limit-warning');
+            return;
+        }
+
+        // Validate each competitor name (this is now redundant but kept for extra safety)
         if ((competitor1 && !validateCompetitorName(competitor1)) ||
             (competitor2 && !validateCompetitorName(competitor2)) ||
             (competitor3 && !validateCompetitorName(competitor3))) {
-            showError('Invalid competitor name. Only letters, numbers, spaces, hyphens, dots and underscores are allowed.');
+            showError('Invalid competitor name detected. Only letters, numbers, spaces, hyphens, dots and underscores are allowed.');
             return;
         }
 
@@ -465,7 +468,7 @@
 
         // For testing purposes, just show success without actually sending
         if (webhookUrl === 'YOUR_N8N_WEBHOOK_URL_HERE') {
-            showSuccess('✅ Security validation passed. Ready to send data to webhook. Please replace YOUR_N8N_WEBHOOK_URL_HERE with your actual webhook URL.');
+            showSuccess('✅ Security validation passed. Ready to send data to webhook. Rate limit: 20 requests/hour, 6 seconds between requests.');
             return;
         }
 
