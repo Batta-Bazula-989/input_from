@@ -88,6 +88,31 @@
             color: #92400e;
         }
 
+        .rate-limit-counter {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #1e40af;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rate-limit-counter.warning {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: rgba(251, 191, 36, 0.3);
+            color: #92400e;
+        }
+
+        .rate-limit-counter.danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+        }
+
         input[type="text"]:focus {
             outline: none;
             border-color: #3b82f6;
@@ -247,7 +272,12 @@
     <h1>Enter 3 competitors</h1>
 
     <div class="security-info">
-        🔒 This form uses security measures including input validation, rate limiting, and sanitization.
+        🔒 This form analyzes viral social media content from competitors. Security measures include input validation, rate limiting, and sanitization.
+    </div>
+
+    <div id="rateLimitCounter" class="rate-limit-counter">
+        <span>⏱️ Requests remaining this hour: <strong id="requestsRemaining">20</strong>/20</span>
+        <span id="cooldownTimer"></span>
     </div>
 
     <form id="competitorForm">'
@@ -345,7 +375,61 @@
         // Add current request
         recentRequests.push(now);
         sessionStorage.setItem('requests', JSON.stringify(recentRequests));
+
+        // Update counter display
+        updateRateLimitDisplay();
+
         return true;
+    }
+
+    // Update rate limit counter display
+    function updateRateLimitDisplay() {
+        const now = Date.now();
+        const requests = JSON.parse(sessionStorage.getItem('requests') || '[]');
+        const recentRequests = requests.filter(time => now - time < 3600000);
+
+        const remaining = SECURITY_CONFIG.MAX_REQUESTS_PER_HOUR - recentRequests.length;
+        const counterElement = document.getElementById('rateLimitCounter');
+        const remainingElement = document.getElementById('requestsRemaining');
+        const cooldownElement = document.getElementById('cooldownTimer');
+
+        remainingElement.textContent = remaining;
+
+        // Update counter styling based on remaining requests
+        counterElement.className = 'rate-limit-counter';
+        if (remaining <= 5) {
+            counterElement.className += ' danger';
+        } else if (remaining <= 10) {
+            counterElement.className += ' warning';
+        }
+
+        // Show cooldown timer if needed
+        if (recentRequests.length > 0) {
+            const lastRequest = Math.max(...recentRequests);
+            const timeSinceLastRequest = now - lastRequest;
+            const cooldownRemaining = SECURITY_CONFIG.MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+
+            if (cooldownRemaining > 0) {
+                const seconds = Math.ceil(cooldownRemaining / 1000);
+                cooldownElement.textContent = `Next request in: ${seconds}s`;
+
+                // Start countdown timer
+                const countdownInterval = setInterval(() => {
+                    const newNow = Date.now();
+                    const newCooldownRemaining = SECURITY_CONFIG.MIN_REQUEST_INTERVAL - (newNow - lastRequest);
+
+                    if (newCooldownRemaining <= 0) {
+                        cooldownElement.textContent = '';
+                        clearInterval(countdownInterval);
+                    } else {
+                        const newSeconds = Math.ceil(newCooldownRemaining / 1000);
+                        cooldownElement.textContent = `Next request in: ${newSeconds}s`;
+                    }
+                }, 1000);
+            } else {
+                cooldownElement.textContent = '';
+            }
+        }
     }
 
     // Input sanitization
@@ -366,6 +450,7 @@
 
         // Check against allowed characters - if invalid, return empty string
         if (!SECURITY_CONFIG.ALLOWED_CHARS_REGEX.test(input)) {
+            console.log('Input failed regex test:', input);
             return '';
         }
 
@@ -380,7 +465,6 @@
 
         // Additional security checks
         if (name.includes('..') || name.includes('//')) return false; // Path traversal prevention
-        if (/^\s+$/.test(name)) return false; // Only whitespace
 
         return true;
     }
@@ -399,7 +483,7 @@
         // Validation - at least one competitor required (check AFTER sanitization)
         if (!competitor1 && !competitor2 && !competitor3) {
             console.log('No valid competitors entered after sanitization');
-            showError('Please enter at least one valid competitor (only letters, numbers, spaces, hyphens, dots and underscores allowed)');
+            showError('Please enter at least one valid competitor/brand name for viral content analysis');
             return;
         }
 
@@ -549,6 +633,12 @@
     // Security event listeners
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Page loaded with security features enabled');
+
+        // Initialize rate limit display
+        updateRateLimitDisplay();
+
+        // Update display every 30 seconds to keep it current
+        setInterval(updateRateLimitDisplay, 30000);
 
         // Prevent form submission via Enter key to force validation
         document.getElementById('competitorForm').addEventListener('submit', function(e) {
