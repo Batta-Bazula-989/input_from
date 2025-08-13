@@ -1,8 +1,8 @@
 // Security configuration
 const SECURITY_CONFIG = {
-    MAX_REQUESTS_PER_HOUR: 20,
+    MAX_REQUESTS_PER_HOUR: 10,
     ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9\s\-\.\_]+$/,
-    MIN_REQUEST_INTERVAL: 6000, // 6 seconds between requests
+    MIN_REQUEST_INTERVAL: 60000, // 1 minute between requests (60 seconds)
     SESSION_TOKEN: null
 };
 
@@ -174,7 +174,7 @@ function runAnalysis() {
 
     // Rate limiting check (moved after input validation)
     if (!checkRateLimit()) {
-        showError('Rate limit exceeded. Please wait before making another request (max 20 requests per hour, 6 seconds between requests).', 'rate-limit-warning');
+        showError('Rate limit exceeded. Please wait before making another request (max 10 requests per hour, 1 minute between requests).', 'rate-limit-warning');
         return;
     }
 
@@ -237,7 +237,7 @@ function runAnalysis() {
 
     // For testing purposes, just show success without actually sending
     if (webhookUrl === 'YOUR_N8N_WEBHOOK_URL_HERE') {
-        showSuccess('✅ Security validation passed. Ready to send data to webhook. Rate limit: 20 requests/hour, 6 seconds between requests.');
+        showSuccess('✅ Security validation passed. Ready to send data to webhook. Rate limit: 10 requests/hour, 1 minute between requests.');
         return;
     }
 
