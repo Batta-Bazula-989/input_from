@@ -48,8 +48,8 @@ export async function sendToWebhook(competitors, country, status) {
             SECURITY_CONFIG.SESSION_TOKEN = generateSessionToken();
             return { success: true, message: 'Analysis started successfully!' };
         } else {
-            return { success: false, message: 'Error starting analysis' };
-        }
+                return { success: false, message: `Error: ${error.message || 'Connection failed'}` };
+              }
 
     } catch (error) {
         console.error('API Error:', error);
