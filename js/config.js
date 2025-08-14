@@ -4,7 +4,7 @@ export const SECURITY_CONFIG = {
     ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9\s\-\.\_]+$/,
     MIN_REQUEST_INTERVAL: 60000, // 1 minute between requests
     SESSION_TOKEN: null,
-    WEBHOOK_URL: 'https://bazoula.app.n8n.cloud/webhook-test/inputrigger'
+    WEBHOOK_URL: 'https://bazoula.app.n8n.cloud/webhook/inputrigger'
 };
 
 export const UI_CONFIG = {
