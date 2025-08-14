@@ -80,12 +80,26 @@ function updateRateLimitDisplay() {
 
     remainingElement.textContent = remaining;
 
+    // Calculate time until next hour reset
+    const currentHour = new Date().getHours();
+    const nextHour = new Date();
+    nextHour.setHours(currentHour + 1, 0, 0, 0);
+    const timeToReset = Math.ceil((nextHour - now) / 1000 / 60); // minutes
+
     // Update counter styling based on remaining requests
     counterElement.className = 'rate-limit-counter';
-    if (remaining <= 5) {
+    if (remaining <= 2) {
         counterElement.className += ' danger';
-    } else if (remaining <= 10) {
+    } else if (remaining <= 5) {
         counterElement.className += ' warning';
+    }
+
+    // Show reset timer
+    const resetTimer = counterElement.querySelector('.reset-timer') || document.createElement('div');
+    resetTimer.className = 'reset-timer';
+    resetTimer.textContent = `Resets in: ${timeToReset} min`;
+    if (!counterElement.querySelector('.reset-timer')) {
+        counterElement.appendChild(resetTimer);
     }
 
     // Show cooldown timer if needed
