@@ -41,7 +41,7 @@ export function validateCompetitorName(name) {
 export function validateFormData(competitors, country, status) {
     // At least one competitor required
     if (competitors.length === 0) {
-        return { valid: false, error: 'Please enter at least one valid competitor/brand name for viral content analysis' };
+        return { valid: false, error: 'Please enter at least one valid competitor/brand name for content analysis' };
     }
 
     // Check for competitor name length
