@@ -1,7 +1,7 @@
 // Configuration and constants
 export const SECURITY_CONFIG = {
     MAX_REQUESTS_PER_HOUR: 10,
-    ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9\s\-\.\_]+$/,
+    ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9\s\-\.\_\u0400-\u04FF]+$/,
     MIN_REQUEST_INTERVAL: 60000, // 1 minute between requests
     SESSION_TOKEN: null,
     WEBHOOK_URL: 'https://bazoula.app.n8n.cloud/webhook-test/inputrigger'
